@@ -196,29 +196,78 @@ defmodule DataStore do
   end
 
   # X X \9 X \3 S80 X X 81 X X X
+  # 201
 
-  defp calculate_score(["X" | rest_score], prev, acc) do
-    
-    calculate_score(rest_score, acc + 10)
+  defp ascii_to_number(ascii_code), do: ascii_code - 48
+
+  defp calculate_score(<<"X", "X", "X">>, acc) do
+    acc + 10 + 10 + 10
   end
-  defp calculate_score(["\\" | rest_score], prev, acc) do
-    calculate_score(rest_score, acc + 10)
+
+  defp calculate_score(<<"X", "X", "X", rest::binary>>, acc) do
+    calculate_score("X" <> "X" <> rest, acc + 10 + 10 + 10)
   end
-  defp calculate_score(["S" | rest_score], prev, acc) do
-    calculate_score(rest_score, acc)
+
+  defp calculate_score(<<"X", "X", "\\", first_throw::8, rest::binary>>, acc) do
+    score = 10 + 10 + ascii_to_number(first_throw)
+    calculate_score("X" <> "\\" <> List.to_string([first_throw]) <> rest, acc + score)
   end
-  defp calculate_score(["" | rest_score], prev, acc) do
-    calculate_score(rest_score, acc)
+
+  defp calculate_score(<<"X", "X", first_throw::8, rest::binary>>, acc) do
+    score = 10 + 10 + ascii_to_number(first_throw)
+    calculate_score("X" <> List.to_string([first_throw]) <> rest, acc + score)
   end
-  defp calculate_score([n | rest_score], prev, acc) do
-    {value, _} = Integer.parse(n)
-    calculate_score(rest_score, acc + value)
+
+  defp calculate_score(<<"X", "\\", rest::binary>>, acc) do
+    calculate_score("\\" <> rest, acc + 10 + 10)
   end
-  defp calculate_score([], _prev, acc), do: acc
+
+  defp calculate_score(<<"X", first_throw::8, second_throw::8, rest::binary>>, acc) do
+    score = 10 + ascii_to_number(first_throw) + ascii_to_number(second_throw)
+    calculate_score(List.to_string([first_throw]) <> List.to_string([second_throw]) <> rest, acc + score)
+  end
+
+  defp calculate_score(<<"\\", _::8, "X", rest::binary>>, acc) do
+    calculate_score("X" <> rest, acc + 10 + 10)
+  end
+
+  # TODO handle \8 \9
+
+  defp calculate_score(<<"\\", _::8, "S", next_throw::8, rest::binary>>, acc) do
+    score = 10 + ascii_to_number(next_throw)
+    calculate_score("S" <> List.to_string([next_throw]) <> rest, acc + score)
+  end
+
+  defp calculate_score(<<"\\", _::8, next_throw::8, rest::binary>>, acc) do
+    score = 10 + ascii_to_number(next_throw)
+    calculate_score(List.to_string([next_throw]) <> rest, acc + score)
+  end
+
+  defp calculate_score(<<"S", first_throw::8, second_throw::8, rest::binary>>, acc) do
+    score = ascii_to_number(first_throw) + ascii_to_number(second_throw)
+    calculate_score(rest, acc + score)
+  end
+
+  defp calculate_score(<<"X">>, acc) do
+    calculate_score("", acc + 10)
+  end
+
+  defp calculate_score(<<"X", rest::binary>>, acc) do
+    calculate_score(rest, acc + 10)
+  end
+
+  defp calculate_score(<<first_throw::8, second_throw::8, rest::binary>>, acc) do
+    score = ascii_to_number(first_throw) + ascii_to_number(second_throw)
+    IO.inspect(score + acc)
+    calculate_score(rest, acc + score)
+  end
+
+  defp calculate_score("", acc) do
+    acc
+  end
 
   def calculate_with_new_score do
-    score = calculate_score(String.split(noahs_updated_scorecard(), ""), 0)
-    IO.inspect(score)
+    score = calculate_score(noahs_updated_scorecard(), 0)
   end
 
 
