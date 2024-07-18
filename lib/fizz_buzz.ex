@@ -4,10 +4,13 @@ defmodule FizzBuzz do
       cond do
         rem(value, 5) == 0 and rem(value, 3) == 0 ->
           IO.puts("FizzBuzz")
+
         rem(value, 3) === 0 ->
           IO.puts("Fizz")
+
         rem(value, 5) === 0 ->
           IO.puts("Buzz")
+
         value ->
           IO.puts(value)
       end

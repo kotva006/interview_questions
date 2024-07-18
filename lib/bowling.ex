@@ -152,7 +152,7 @@ defmodule DataStore do
       teamid = Map.get(user_to_team_map, score.userid)
       score_date_time = DateTime.from_unix!(score.datetime)
 
-      if (filter_date === nil || filter_date === DateTime.to_date(score_date_time)) do
+      if filter_date === nil || filter_date === DateTime.to_date(score_date_time) do
         Map.update(acc, teamid, {score.score, 1}, fn {total_score, score_count} ->
           {total_score + score.score, score_count + 1}
         end)
@@ -186,11 +186,14 @@ defmodule DataStore do
   end
 
   def calculate_bonus do
-    #goal remove any scores not from target ~D[2021, 05, 13]
+    # goal remove any scores not from target ~D[2021, 05, 13]
     players_json = Jason.decode!(DataStore.players(), keys: :atoms)
 
     {winning_teamid, _winning_score} =
-      players_json |> do_user_to_team_map() |> do_team_score_map(~D[2021-05-13]) |> find_winning_team()
+      players_json
+      |> do_user_to_team_map()
+      |> do_team_score_map(~D[2021-05-13])
+      |> find_winning_team()
 
     winning_teamid
   end
@@ -224,7 +227,11 @@ defmodule DataStore do
 
   defp calculate_score(<<"X", first_throw::8, second_throw::8, rest::binary>>, acc) do
     score = 10 + ascii_to_number(first_throw) + ascii_to_number(second_throw)
-    calculate_score(List.to_string([first_throw]) <> List.to_string([second_throw]) <> rest, acc + score)
+
+    calculate_score(
+      List.to_string([first_throw]) <> List.to_string([second_throw]) <> rest,
+      acc + score
+    )
   end
 
   defp calculate_score(<<"\\", _::8, "X", rest::binary>>, acc) do
@@ -269,6 +276,4 @@ defmodule DataStore do
   def calculate_with_new_score do
     score = calculate_score(noahs_updated_scorecard(), 0)
   end
-
-
 end
